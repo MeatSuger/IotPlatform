@@ -1,0 +1,6 @@
+[submodule "back"]
+	path = back
+	url = git@github.com:MeatSuger/iotPlatform_back.git
+[submodule "font"]
+	path = font
+	url = git@github.com:MeatSuger/IotPlatform_web.git
