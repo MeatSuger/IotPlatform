@@ -1,19 +1,16 @@
-# IoT Platform
+# IoT Platform Monorepo
 
-这是一个包含后端（Spring Boot / Maven）与前端（Vite + Vue 3）的物联网平台仓库。
+一个包含后端（Spring Boot / Maven）、前端（Vite + Vue 3 / TS）以及设备固件（PlatformIO）的物联网平台多仓库工作区。
 
-仓库结构（节选）
+目录概览
 
-- `back/` — 后端（Maven/Java）
-  - `back/pom.xml`
-  - `back/src/main/java/...` — Java 源码
-- `font/` — 前端（Vite + Vue 3 / TypeScript）
-  - `font/package.json`
-  - `font/src/` — 前端源码
+- `back/`：Java 后端服务（Spring Boot + Maven）
+- `font/`：Web 前端（Vite + Vue 3 + TypeScript）
+- `firmware/`：设备固件（PlatformIO / Arduino 栈）
 
 快速开始（Windows + PowerShell）
 
-1. 克隆仓库并初始化子模块（如有）：
+1) 克隆与初始化
 
 ```powershell
 git clone <repo-url>
@@ -21,43 +18,60 @@ cd <repo-folder>
 git submodule update --init --recursive
 ```
 
-2. 启动后端（进入 `back`）：
+2) 启动后端
 
 ```powershell
 cd .\back
-# 构建
+mvn -v
 mvn clean install -DskipTests
-# 运行（开发）
 mvn spring-boot:run
 ```
 
-默认配置文件位于 `back/src/main/resources/` 下的 `application*.yml`，可根据需要切换或覆盖环境变量。
+配置位于 `back/src/main/resources/application*.yml`，可通过 `--spring.profiles.active=dev|prod` 切换环境。
 
-3. 启动前端（进入 `font`）：
+3) 启动前端
 
 ```powershell
 cd ..\font
+node -v
 npm install
 npm run dev
 ```
 
-前端默认在 `font/src/main.ts` 启动，并使用 Vite 的开发服务器。
+本地开发默认运行在 Vite 开发端口，API 代理与环境变量见 `font/vite.config.ts` 与 `font/.env*`（如存在）。
 
-常见提示
-
-- 如果后端使用 InfluxDB/Redis 等外部服务，请确保相应服务已启动，并在 `application.yml` 中配置好连接信息。
-- 若修改了后端端口或 CORS 策略，请同步前端请求地址（通常在 `font/src/services` 或 `font/vite.config.ts` 中）。
-
-贡献
-
-- 提交代码前请拉取最新分支并更新子模块：
+4) 编译/烧录固件（可选）
 
 ```powershell
-git pull
+cd ..\firmware
+pio --version
+pio run
+pio run -t upload
+pio device monitor
+```
+
+PlatformIO 项目参数见 `firmware/platformio.ini`。
+
+常见问题与提示
+
+- 外部依赖：如需要 InfluxDB/Redis/MQTT，请先本地或容器启动并在后端 `application.yml` 中配置。
+- CORS/接口地址：后端端口或路径调整后，请同步前端请求配置（`font/src/utils/request.ts`、`font/vite.config.ts`）。
+- 端口占用：如开发端口被占用，调整 Vite 端口或后端 `server.port`。
+
+子仓库文档
+
+- 详见 `back/README.md`（后端部署与配置）
+- 详见 `font/README.md`（前端开发与构建）
+- 详见 `firmware/README.md`（设备固件与串口监视）
+
+贡献指南
+
+- 提交前拉取更新并保持依赖一致：
+
+```powershell
+git pull --rebase
 git submodule update --remote
 ```
 
-- 前端在 `font/src` 下，后端在 `back/src/main/java` 下。
-
-- 把 README 扩展为包含 API 文档示例。
-- 添加运行脚本（PowerShell 脚本）来一键启动前后端。
+- 代码位置：后端 `back/src/main/java`，前端 `font/src`，固件 `firmware/src`。
+- 建议新增：API 文档样例、统一启动脚本（PowerShell）与环境示例文件。
