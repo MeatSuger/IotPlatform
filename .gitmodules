@@ -4,3 +4,6 @@
 [submodule "font"]
 	path = font
 	url = git@github.com:MeatSuger/IotPlatform_web.git
+[submodule "firmware"]
+	path = firmware
+	url = git@github.com:MeatSuger/IotPlatform_firmware.git
