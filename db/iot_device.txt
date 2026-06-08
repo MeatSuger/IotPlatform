@@ -1,0 +1,3 @@
+"device_id"	"id"	"device_name"	"device_type"	"firmware_version"	"ip_address"	"mac_address"	"location"	"owner_id"	"status"	"last_active_time"	"created_at"	"updated_at"
+"a5c83f"	"2"	"阿达啊"	"humidy"	""	""	""		"789"	"ACTIVE"		"15/11/2025 15:17:23"	
+"ca83ff"	"1"	"sdftgyhj"	"temptaure"	""	""	""		"789"	"ACTIVE"		"15/11/2025 04:17:57"	
