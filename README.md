@@ -1,77 +1,100 @@
 # IoT Platform Monorepo
 
-一个包含后端（Spring Boot / Maven）、前端（Vite + Vue 3 / TS）以及设备固件（PlatformIO）的物联网平台多仓库工作区。
+一个物联网平台多仓库工作区，包含 Go 后端、Vue 3 前端管理台以及 ESP32 设备固件。
 
-目录概览
+## 目录概览
 
-- `back/`：Java 后端服务（Spring Boot + Maven）
-- `font/`：Web 前端（Vite + Vue 3 + TypeScript）
-- `firmware/`：设备固件（PlatformIO / Arduino 栈）
+| 目录 | 说明 | 技术栈 |
+|------|------|--------|
+| `back/` | 后端服务 | Go 1.26 + Gin + Ent ORM + PostgreSQL + Redis + InfluxDB + MQTT |
+| `font/` | Web 管理台 | Vue 3 + Vite + TypeScript + Element Plus + UnoCSS + Pinia（基于 Fantastic-admin） |
+| `firmware/` | 设备固件 | ESP-IDF (CMake) — WiFi / MQTT / 传感器 |
+| `db/` | 数据库参考 | SQL 导出文件（用户、设备、下行命令表结构参考） |
 
-快速开始（Windows + PowerShell）
+## 子仓库
 
-1) 克隆与初始化
+- `back` → [iotPlatform_back](https://github.com/MeatSuger/iotPlatform_back)
+- `font` → [IotPlatform_web](https://github.com/MeatSuger/IotPlatform_web)
+- `firmware` → [IotPlatform_firmware](https://github.com/MeatSuger/IotPlatform_firmware)
 
-```powershell
+## 快速开始
+
+### 1) 克隆与初始化
+
+```bash
 git clone <repo-url>
 cd <repo-folder>
 git submodule update --init --recursive
 ```
 
-2) 启动后端
+### 2) 启动后端（Go）
 
-```powershell
-cd .\back
-mvn -v
-mvn clean install -DskipTests
-mvn spring-boot:run
+```bash
+cd back
+
+# 拷贝并编辑配置文件
+cp configs/config.yaml configs/config.local.yaml
+# 按需修改 PostgreSQL / Redis / InfluxDB / MQTT 连接信息
+
+# 安装依赖并运行（热重载）
+make deps
+make dev
+
+# 或直接编译运行
+make build
+./build/iot-platform
 ```
 
-配置位于 `back/src/main/resources/application*.yml`，可通过 `--spring.profiles.active=dev|prod` 切换环境。
+详见 `back/README.md`。
 
-3) 启动前端
+### 3) 启动前端
 
-```powershell
-cd ..\font
-node -v
-npm install
-npm run dev
+```bash
+cd font
+
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
+pnpm dev
+
+# 构建生产版本
+pnpm build
 ```
 
-本地开发默认运行在 Vite 开发端口，API 代理与环境变量见 `font/vite.config.ts` 与 `font/.env*`（如存在）。
+环境变量在 `apps/core-element-plus/.env.development` 中配置。
 
-4) 编译/烧录固件（可选）
+详见 `font/README.md`。
 
-```powershell
-cd ..\firmware
-pio --version
-pio run
-pio run -t upload
-pio device monitor
+### 4) 编译/烧录固件（ESP32）
+
+```bash
+cd firmware
+
+# 设置 ESP-IDF 环境后
+idf.py set-target esp32
+idf.py build
+idf.py -p /dev/ttyUSB0 flash
+idf.py -p /dev/ttyUSB0 monitor
 ```
 
-PlatformIO 项目参数见 `firmware/platformio.ini`。
+详见 `firmware/AGENTS.md`。
 
-常见问题与提示
+## 常见问题
 
-- 外部依赖：如需要 InfluxDB/Redis/MQTT，请先本地或容器启动并在后端 `application.yml` 中配置。
-- CORS/接口地址：后端端口或路径调整后，请同步前端请求配置（`font/src/utils/request.ts`、`font/vite.config.ts`）。
-- 端口占用：如开发端口被占用，调整 Vite 端口或后端 `server.port`。
+- **外部依赖**：需要 PostgreSQL 16+、Redis 7+、InfluxDB 2.7+（可选 MQTT Broker）。可用 `back/deployments/` 下的 Docker Compose 快速启动。
+- **端口占用**：后端默认 `8182`，前端默认 Vite 开发端口。如冲突请修改后端 `configs/config.yaml` 或前端 `vite.config.ts`。
+- **CORS**：后端已配置 Gin CORS 中间件，生产环境请在 `configs/config.prod.yaml` 中设置 `cors.allowed-origins`。
 
-子仓库文档
+## 贡献指南
 
-- 详见 `back/README.md`（后端部署与配置）
-- 详见 `font/README.md`（前端开发与构建）
-- 详见 `firmware/README.md`（设备固件与串口监视）
+- 提交前拉取更新：
 
-贡献指南
-
-- 提交前拉取更新并保持依赖一致：
-
-```powershell
+```bash
 git pull --rebase
 git submodule update --remote
 ```
 
-- 代码位置：后端 `back/src/main/java`，前端 `font/src`，固件 `firmware/src`。
-- 建议新增：API 文档样例、统一启动脚本（PowerShell）与环境示例文件。
+- 后端代码在 `back/internal/`（controller / service / repository / model / middleware / websocket），入口 `back/cmd/iot-platform/main.go`
+- 前端页面在 `font/apps/core-element-plus/src/views/iot/`，API 封装在 `font/apps/core-element-plus/src/api/`
+- 固件模块在 `firmware/main/`（app / wifi / mqtt / sensor / peripherals / token / net / core）
